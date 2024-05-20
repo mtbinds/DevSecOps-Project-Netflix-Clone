@@ -15,6 +15,9 @@
 - <b>OWASP Dependency-Check:</b> Dependency Vulnerability Scanning
 - <b>Trivy:</b> Container Image Vulnerability Scanning
 
+![image](https://github.com/michaelmorley1/DevSecOps-Project/assets/39282112/541655e0-c6f6-46d5-9846-82b73fe6f4d6)
+
+
 <h2>Steps Overview</h2>
 1. Initial Setup and Deployment
 2. Security Scanning (OWASP and Trivy)
