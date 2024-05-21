@@ -30,6 +30,11 @@
 <h3>Initial Setup and Deployment</h3>
 
 <h4>Step 1: Launch EC2 Instance</h4>
+
+<p align="center">
+<img src="https://imgur.com/OVWgoVf.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
 - Added security group rules for all applications
 
 <h4>Step 2: Clone Netflix Application Code</h4>
