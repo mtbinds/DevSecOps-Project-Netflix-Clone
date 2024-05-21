@@ -31,16 +31,22 @@
 
 <h4>Step 1: Launch EC2 Instance</h4>
 
+-Launch an AWS T2 Large Instance using the Ubuntu image.
+-Configure HTTP and HTTPS settings in the security group.
+
 <p align="center">
 <img src="https://imgur.com/OVWgoVf.png" height="80%" width="80%" alt="baseline"/>
 </p>
 
-- Added security group rules for all applications
 
-<h4>Step 2: Clone Netflix Application Code</h4>
+<h4>Step 2: Clone  Application Code</h4>
+- Update all the packages
+- Clone application code repository onto the EC2 instance
+
 <pre><code>git clone https://github.com/N4si/DevSecOps-Project.git</code></pre>
 
 <h4>Step 3: Install Docker</h4>
+- Set up Docker on the EC2 instance 
 <pre><code>sudo apt-get update
 sudo apt-get install docker.io -y
 sudo usermod -aG docker $USER
@@ -67,14 +73,38 @@ EXPOSE 80
 ENTRYPOINT ["nginx", "-g", "daemon off;"]</code></pre>
 
 <h4>Step 5: Get the API Key</h4>
-- Get the API key from [The Movie Database (TMDb)](https://www.themoviedb.org/)
+- Open a web browser and navigate to TMDB (The Movie Database) website.
+- Click on "Login" and create an account.
+- Once logged in, go to your profile and select "Settings."
+- Click on "API" from the left-side panel.
+- Create a new API key by clicking "Create" and accepting the terms and conditions.
+- Provide the required basic details and click "Submit."
+- You will receive your TMDB API key.
+
+<p align="center">
+<img src="https://imgur.com/AZJrgl8.png" height="80%" width="80%" alt="baseline"/>
+</p>
 
 <h4>Step 6: Build Docker Image</h4>
 <pre><code>docker build --build-arg TMDB_V3_API_KEY=&lt;your_api_key&gt; -t netflix .</code></pre>
 
 <h4>Step 7: Install SonarQube and Trivy</h4>
+
+- Install SonarQube and Trivy on the EC2 instance to scan for vulnerabilities.
+
 <pre><code># Install SonarQube
 docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
+
+To access:
+
+publicIP:9000 (by default username & password is admin)
+<p align="center">
+<img src="https://imgur.com/p1ZIl15.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+- Integrate SonarQube with your CI/CD pipeline.
+- Configure SonarQube to analyze code for quality and security issues.
+
 
 # Install Trivy
 sudo apt-get install wget apt-transport-https gnupg lsb-release
@@ -83,9 +113,44 @@ echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main |
 sudo apt-get update
 sudo apt-get install trivy</code></pre>
 
-<h3>Security Scanning (OWASP and Trivy)</h3>
+<p align="center">
+<img src="https://imgur.com/j72Oe0n.png" height="80%" width="80%" alt="baseline"/>
+</p>
 
-<h4>Step 13: Configure CI/CD Pipeline in Jenkins</h4>
+Jenkins Configuration
+<h4>Install Jenkins</h4>
+
+-Install Jenkins on the EC2 instance to automate deployment
+<pre><code>sudo apt update
+sudo apt install fontconfig openjdk-17-jre
+java -version
+sudo wget -O /usr/share/keyrings/jenkins-keyring.asc https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt-get update
+sudo apt-get install jenkins
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+</code></pre>
+
+- Access Jenkins in a web browser using the public IP of your EC2 instance.
+  publicIp:8080
+
+  
+
+
+
+publicIp:8080
+<h4>Step 9: Install Necessary Plugins in Jenkins</h4>
+Eclipse Temurin Installer (Install without restart)
+SonarQube Scanner (Install without restart)
+NodeJs Plugin (Install without restart)
+Email Extension Plugin
+Configure Java and Node.js in Global Tool Configuration.
+
+<h4>Step 10: Configure SonarQube Server in Manage Jenkins</h4>
+Create a token and add it to Jenkins.
+CI/CD Pipeline Configuration
+<h4>Step 11: Configure CI/CD Pipeline in Jenkins</h4>
 <pre><code>pipeline {
     agent any
     tools {
@@ -93,9 +158,129 @@ sudo apt-get install trivy</code></pre>
         nodejs 'node16'
     }
     environment {
-        SCANNER_HOME=tool 'sonar-scanner'
+        SCANNER_HOME = tool 'sonar-scanner'
+        DOCKER_CREDENTIALS_ID = 'docker'
+        SONAR_CREDENTIALS_ID = 'Sonar-token'
+        TMDB_API_KEY = 'e3226ad6b25bbeecc43179071aee4afa'
     }
     stages {
-        // ... Pipeline stages ...
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                git branch: 'main', url: 'https://github.com/N4si/DevSecOps-Project.git'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=Netflix \
+                        -Dsonar.projectKey=Netflix'''
+                }
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: SONAR_CREDENTIALS_ID
+                }
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('OWASP FS SCAN') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('Trivy FS Scan') {
+            steps {
+                sh 'trivy fs . > trivyfs.txt'
+            }
+        }
+        stage('Docker Build & Push') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: DOCKER_CREDENTIALS_ID, toolName: 'docker') {
+                        sh 'docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t netflix .'
+                        sh 'docker tag netflix morlo66/netflix:latest'
+                        sh 'docker push morlo66/netflix:latest'
+                    }
+                }
+            }
+        }
+        stage('Trivy Image Scan') {
+            steps {
+                sh 'trivy image nasi101/netflix:latest > trivyimage.txt'
+            }
+        }
+        stage('Deploy to Container') {
+            steps {
+                sh 'docker run -d --name netflix -p 8081:80 nasi101/netflix:latest'
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
+                        sh 'kubectl apply -f Kubernetes/deployment.yml'
+                        sh 'kubectl apply -f Kubernetes/service.yml'
+                    }
+                }
+            }
+        }
     }
-}</code></pre>
+}
+</code></pre>
+Monitoring and Notification Setup
+<h4>Step 12: Install Prometheus</h4>
+<pre><code>sudo useradd --system --no-create-home --shell /bin/false prometheus
+wget https://github.com/prometheus/prometheus/releases/download/v2.47.1/prometheus-2.47.1.linux-amd64.tar.gz
+tar -xvf prometheus-2.47.1.linux-amd64.tar.gz
+cd prometheus-2.47.1.linux-amd64/
+sudo mkdir -p /data /etc/prometheus
+sudo mv prometheus promtool /usr/local/bin/
+sudo mv consoles/ console_libraries/ /etc/prometheus/
+sudo mv prometheus.yml /etc/prometheus/prometheus.yml
+sudo chown -R prometheus:prometheus /etc/prometheus/ /data/
+
+sudo nano /etc/systemd/system/prometheus.service
+</code></pre>
+Add the following content to the prometheus.service file:
+
+<pre><code>[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+StartLimitIntervalSec=500
+StartLimitBurst=5
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+Restart=on-failure
+RestartSec=5s
+ExecStart=/usr/local/bin/prometheus \
+  --config.file=/etc/prometheus/prometheus.yml \
+  --storage.tsdb.path=/data \
+  --web.console.templates=/etc/prometheus/consoles \
+  --web.console.libraries=/etc/prometheus/console_libraries \
+  --web.listen-address=0.0.0.0:9090 \
+  --web.enable-lifecycle
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+Enable and start Prometheus:
+
+<pre><
