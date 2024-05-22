@@ -608,13 +608,324 @@ To make it easier to view metrics, you can import a pre-configured dashboard. Fo
 
 You should now have a Grafana dashboard set up to visualize metrics from Prometheus.
 <p align="center">
-<img src="hhttps://imgur.com/3EPEyC3.png" height="80%" width="80%" alt="baseline"/>
+<img src="https://imgur.com/3EPEyC3.png" height="80%" width="80%" alt="baseline"/>
 </p>
 
 Configure Prometheus Plugin Integration:
 Integrate Jenkins with Prometheus to monitor the CI/CD pipeline.
 Installed plugin
 
+<p align="center">
+<img src="https://imgur.com/Iybj4Dh.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+Import Jenkins dashboard to Grafana
+
+<p align="center">
+<img src="https://imgur.com/RZa6OnS.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+Full Pipeline
+
+Run pipeline by clicking Build now on Jenkins.
+
+Pipeleine ran successfully with no errors.
+
+<p align="center">
+<img src="https://imgur.com/qiqFBg5.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+To see the Sonarqube report, you can go to Sonarqube Server and go to Projects.
+
+<p align="center">
+<img src="https://imgur.com/YsaUfIy.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+Dependency check results will show like below:
+<p align="center">
+<img src="https://imgur.com/uKyAc2v.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+When you log in to Dockerhub, you will see a new image is created
+<p align="center">
+<img src="https://imgur.com/ncquXYo.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+Netflix clone app can now be seen running on port 8081
+
+<p align="center">
+<img src="https://imgur.com/2McREbi.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+# Kubernetes Setup Guide for Jenkins Integration
+
+<h4>Install Kubectl on Jenkins Machine</h4>
+
+Install `kubectl` on the Jenkins machine:
+
+<pre><code>sudo apt update
+sudo apt install curl
+curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+kubectl version --client
+</code></pre>
+
+<h4>Master and Worker Instances Setup</h4>
+
+Ensure that both master and worker instances are set up.
+
+<p align="center">
+<img src="https://imgur.com/N1ak6YC.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+<h4>Setting Hostnames</h4>
+
+
+### Master Node - Run 
+<pre><code>
+sudo hostnamectl set-hostname K8s-Master
+</code></pre>
+
+### Worker Node - Run
+<pre><code>
+sudo hostnamectl set-hostname K8s-Worker
+</code></pre>
+
+<h4>Part 2: Installing Dependencies</h4>
+
+### Both Master and Worker Nodes
+<pre><code>
+sudo apt-get update
+
+sudo apt-get install -y docker.io
+sudo usermod -aG docker ubuntu
+newgrp docker
+sudo chmod 777 /var/run/docker.sock
+
+sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+sudo tee /etc/apt/sources.list.d/kubernetes.list <<EOF
+deb https://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+sudo apt-get update
+
+sudo apt-get install -y kubelet kubeadm kubectl
+
+sudo snap install kube-apiserver
+</code></pre>
+
+<h4>Part 3: Initializing Kubernetes</h4>
+
+### Master Node
+<pre><code>
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+# Exit from the root user and run the following commands:
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+</code></pre>
+
+### Worker Node
+Join the worker node to the Kubernetes cluster using the command provided by the `kubeadm init` output:
+<pre><code>
+sudo kubeadm join <master-node-ip>:<master-node-port> --token <token> --discovery-token-ca-cert-hash <hash>
+</code></pre>
+
+<h4>Config File Handling for Jenkins</h4>
+
+1. Copy the Kubernetes config file to the Jenkins master or your local file manager.
+2. Save it as `secret-file.txt` in a chosen folder (e.g., `Documents`).
+3. Use this file in the Kubernetes credential section of Jenkins.
+
+
+<h4>Installed Kubernetes Plugins on Jenkins</h4>
+
+Install the necessary Kubernetes plugins on Jenkins to facilitate the integration.
+
+<p align="center">
+<img src="https://imgur.com/nJb1D8k.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+<h4>Kubernetes Plugin Installation in Jenkins</h4>
+
+1. Install the Kubernetes Plugin in Jenkins.
+2. Go to `Manage Jenkins -> Manage Credentials`.
+3. Click on Jenkins Global, then Add Credentials.
+4. Select Add Secret File and save.
+<p align="center">
+<img src="https://imgur.com/k3G6x9m.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+
+<h4>Installing Node Exporter on Master and Worker Nodes</h4>
+
+### Creating a System User for Node Exporter
+<pre><code>
+sudo useradd --system --no-create-home --shell /bin/false node_exporter
+</code></pre>
+
+### Downloading and Setting Up Node Exporter
+<pre><code>
+wget https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
+tar -xvf node_exporter-1.6.1.linux-amd64.tar.gz
+sudo mv node_exporter-1.6.1.linux-amd64/node_exporter /usr/local/bin/
+rm -rf node_exporter*
+</code></pre>
+
+### Verifying the Node Exporter Installation
+<pre><code>
+node_exporter --version
+</code></pre>
+
+### Configuring Node Exporter
+<pre><code>
+sudo vim /etc/systemd/system/node_exporter.service
+</code></pre>
+
+Add the following content to `node_exporter.service`:
+<pre><code>
+[Unit]
+Description=Node Exporter
+Wants=network-online.target
+After=network-online.target
+
+StartLimitIntervalSec=500
+StartLimitBurst=5
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+Restart=on-failure
+RestartSec=5s
+ExecStart=/usr/local/bin/node_exporter --collector.logind
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+
+### Enabling and Starting Node Exporter
+<pre><code>
+sudo systemctl enable node_exporter
+sudo systemctl start node_exporter
+sudo systemctl status node_exporter
+</code></pre>
+
+<h4>Node Exporter Set Up and Running on Both Nodes</h4>
+
+Verify that Node Exporter is running on both the master and worker nodes.
+
+<p align="center">
+<img src="https://imgur.com/jYR53cm.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+<p align="center">
+<img src="https://imgur.com/amE3ksH.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+<h4>Configuring Prometheus Server</h4>
+<pre><code>
+sudo vim /etc/prometheus/prometheus.yml
+</code></pre>
+
+Add the following job configurations in `prometheus.yml`:
+<pre><code>
+  - job_name: node_export_masterk8s
+    static_configs:
+      - targets: ["<master-ip>:9100"]
+
+  - job_name: node_export_workerk8s
+    static_configs:
+      - targets: ["<worker-ip>:9100"]
+</code></pre>
+
+Validate the Prometheus configuration:
+<pre><code>
+promtool check config /etc/prometheus/prometheus.yml
+</code></pre>
+
+Reload the Prometheus configuration using a POST request:
+<pre><code>
+curl -X POST http://localhost:9090/-/reload
+</code></pre>
+
+Check the Prometheus targets:
+<pre><code>
+http://<ip>:9090/targets
+</code></pre>
+
+By default, Node Exporter will be exposed on port 9100.
+
+<h4>Two Targets for Worker and Master K8s Now Running on Prometheus</h4>
+
+Verify that both targets are running in Prometheus.
+
+<p align="center">
+<img src="https://imgur.com/RT5Vjmc.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+
+<h4>Deploying on the Kubernetes Cluster</h4>
+
+### Jenkins Pipeline Stage
+<pre><code>
+stage('Deploy to Kubernetes') {
+    steps {
+        script {
+            dir('Kubernetes') {
+                withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
+                    sh 'kubectl apply -f deployment.yml'
+                    sh 'kubectl apply -f service.yml'
+                }
+            }
+        }
+    }
+}
+</code></pre>
+
+### Checking Deployment Status
+In the Kubernetes cluster (master node), run:
+<pre><code>
+kubectl get all
+kubectl get svc  # use anyone
+</code></pre>
+
+### Access from a Web Browser
+Access the application using:
+<pre><code>
+<public-ip-of-worker:service-port>
+</code></pre>
+
+<p align="center">
+<img src="https://imgur.com/LPUO8L4.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+
+<h4>Monitoring</h4>
+p align="center">
+<img src="https://imgur.com/9VGLWkM.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+<p align="center">
+<img src="https://imgur.com/WvcPnuG.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+<p align="center">
+<img src="https://imgur.com/NGnK8FX.png" height="80%" width="80%" alt="baseline"/>
+</p>
+
+
+
+<h4>Terminating Instances</h4>
+
+Complete any necessary steps to terminate instances and clean up resources after deployment.
+
+<h4>Complete pipeline
+</h4>
 
 
 <h
