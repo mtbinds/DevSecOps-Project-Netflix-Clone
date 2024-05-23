@@ -3,16 +3,14 @@
 ![image](https://github.com/michaelmorley1/DevSecOps-Project/assets/39282112/541655e0-c6f6-46d5-9846-82b73fe6f4d6)
 
 <h2>Description</h2>
-<b>This project creates a Netflix clone using various tools and technologies. Jenkins will serve as the Continuous Integration and Continuous Deployment (CICD) tool, and the application will be deployed within a Docker container, managed within a Kubernetes Cluster. Security will be intergrated into the process with Sonarqube, Trivy and OWASP Dependency Check.  Additionally, for monitoring Jenkins and Kubernetes metrics, Grafana, Prometheus, and Node exporter will be used.</b>
+<b>This project creates a Netflix clone using various tools and technologies. Jenkins will serve as the Continuous Integration and Continuous Deployment (CICD) tool, and the application will be deployed within a Docker container, managed within a Kubernetes Cluster. Security will be integrated into the process with Sonarqube, Trivy and OWASP Dependency Check.  Additionally, for monitoring Jenkins and Kubernetes metrics, Grafana, Prometheus, and Node Exporter will be used.</b>
 
 
 <h1>DevSecOps Project: Netflix Clone</h1>
 
-![image](https://github.com/michaelmorley1/DevSecOps-Project/assets/39282112/541655e0-c6f6-46d5-9846-82b73fe6f4d6)
-
 <h2>Description</h2>
 
-<b>This project creates a Netflix clone using various tools and technologies. Jenkins will serve as the Continuous Integration and Continuous Deployment (CICD) tool, and the application will be deployed within a Docker container, managed within a Kubernetes Cluster. Security will be integrated into the process with Sonarqube, Trivy, and OWASP Dependency Check. Additionally, for monitoring Jenkins and Kubernetes metrics, Grafana, Prometheus, and Node exporter will be used.</b>
+<b>This project creates a Netflix clone using various tools and technologies. Jenkins will serve as the Continuous Integration and Continuous Deployment (CICD) tool, and the application will be deployed within a Docker container, managed within a Kubernetes Cluster. Security will be integrated into the process with Sonarqube, Trivy, and OWASP Dependency Check. Additionally, for monitoring Jenkins and Kubernetes metrics, Grafana, Prometheus, and Node Exporter will be used.</b>
 
 <h2>Utilities Used</h2>
 
@@ -25,294 +23,6 @@
 - <b>OWASP Dependency-Check:</b> Dependency Vulnerability Scanning
 - <b>Trivy:</b> Container Image Vulnerability Scanning
 - <b>Node Exporter:</b> System Metrics Collection
-
-<h2>Steps Overview</h2>
-
-1. **Initial Setup and Deployment**
-    - Launch EC2 Instance
-    - Build Docker Image
-
-2. **Security Scanning**
-    - Install SonarQube and Trivy
-    - Configure Dependency-Check Tool
-
-3. **Continuous Integration and Continuous Deployment (CI/CD) with Jenkins**
-    - Install Jenkins
-    - Configure Dependency-Check and Trivy Scans in Pipeline
-
-4. **Monitoring Setup**
-    - Install Prometheus
-    - Configure Prometheus Plugin Integration in Jenkins
-
-5. **Kubernetes Setup**
-    - Install Kubectl on Jenkins Machine
-    - Install Node Exporter on Master and Worker Nodes
-
-<h2>Detailed Steps</h2>
-
-<h3>Initial Setup and Deployment</h3>
-
-<h4>Launch EC2 Instance</h4>
-- Launch an AWS T2 Large Instance using the Ubuntu image.
-- Configure HTTP and HTTPS settings in the security group.
-
-<p align="center">
-  <img src="https://imgur.com/OVWgoVf.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-<h4>Clone Application Code</h4>
-- Update all the packages
-- Clone the application code repository onto the EC2 instance
-
-<pre><code>git clone https://github.com/N4si/DevSecOps-Project.git</code></pre>
-
-<h4>Install Docker</h4>
-- Set up Docker on the EC2 instance
-
-<pre><code>
-sudo apt-get update
-sudo apt-get install docker.io -y
-sudo usermod -aG docker $USER
-newgrp docker
-sudo chmod 777 /var/run/docker.sock
-</code></pre>
-
-<h4>Create Dockerfile</h4>
-
-<pre><code>
-FROM node:16.17.0-alpine as builder
-WORKDIR /app
-COPY ./package.json .
-COPY ./yarn.lock .
-RUN yarn install
-COPY . .
-ARG TMDB_V3_API_KEY
-ENV VITE_APP_TMDB_V3_API_KEY=${TMDB_V3_API_KEY}
-ENV VITE_APP_API_ENDPOINT_URL="https://api.themoviedb.org/3"
-RUN yarn build
-FROM nginx:stable-alpine
-WORKDIR /usr/share/nginx/html
-RUN rm -rf ./*
-COPY --from=builder /app/dist .
-EXPOSE 80
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
-</code></pre>
-
-<h4>Get the API Key</h4>
-- Open a web browser and navigate to TMDB (The Movie Database) website.
-- Click on "Login" and create an account.
-- Once logged in, go to your profile and select "Settings."
-- Click on "API" from the left-side panel.
-- Create a new API key by clicking "Create" and accepting the terms and conditions.
-- Provide the required basic details and click "Submit."
-- You will receive your TMDB API key.
-
-<p align="center">
-  <img src="https://imgur.com/AZJrgl8.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-<h4>Build Docker Image</h4>
-
-<pre><code>
-docker build --build-arg TMDB_V3_API_KEY=&lt;your_api_key&gt; -t netflix .
-</code></pre>
-
-<h4>Install SonarQube and Trivy</h4>
-Install SonarQube and Trivy on the EC2 instance to scan for vulnerabilities.
-
-Install SonarQube
-
-<pre><code>
-docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
-</code></pre>
-
-To access: publicIP:9000 (by default username & password is admin)
-
-<p align="center">
-  <img src="https://imgur.com/p1ZIl15.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-- Integrate SonarQube with your CI/CD pipeline.
-- Configure SonarQube to analyze code for quality and security issues.
-
-Install Trivy
-
-<pre><code>
-sudo apt-get install wget apt-transport-https gnupg lsb-release
-wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
-sudo apt-get update
-sudo apt-get install trivy
-</code></pre>
-
-Trivy now installed on EC2 instance
-
-<p align="center">
-  <img src="https://imgur.com/j72Oe0n.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-<h4>Install Jenkins</h4>
-Install Jenkins on the EC2 instance to automate deployment
-
-<pre><code>
-sudo apt update
-sudo apt install fontconfig openjdk-17-jre
-java -version
-sudo wget -O /usr/share/keyrings/jenkins-keyring.asc https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
-echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
-sudo apt-get update
-sudo apt-get install jenkins
-sudo systemctl start jenkins
-sudo systemctl enable jenkins
-</code></pre>
-
-Access Jenkins in a web browser using the public IP of your EC2 instance. publicIp:8080
-
-<p align="center">
-  <img src="https://imgur.com/m3QP2sh.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-<h4>Install Necessary Plugins in Jenkins</h4>
-Eclipse Temurin Installer (Install without restart)
-SonarQube Scanner (Install without restart)
-NodeJs Plugin (Install without restart)
-
-Configure Java and Node.js in Global Tool Configuration.
-
-<p align="center">
-  <img src="https://imgur.com/obKULqS.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-<p align="center">
-  <img src="https://imgur.com/EqbFYuI.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-<h4>Configure SonarQube Server in Manage Jenkins</h4>
-Create a token and add it to Jenkins. Go to Jenkins Dashboard → Manage Jenkins → Credentials
-
-<p align="center">
-  <img src="https://imgur.com/ZfEVzIi.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-Install a sonar scanner in the tools.
-
-<p align="center">
-  <img src="https://imgur.com/zLRXN27.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-CI/CD Pipeline Configuration
-
-<h4>Configure CI/CD Pipeline in Jenkins</h4>
-Created a CI/CD pipeline in Jenkins to automate the application deployment
-
-<pre><code>
-pipeline {
-     agent any
-     tools {…}
-}
-</code></pre>
-
-<h4>Install OWASP Dependency Check Plugins</h4>
-- Go to "Dashboard" in your Jenkins web interface.
-- Navigate to "Manage Jenkins" → "Manage Plugins."
-- Click on the "Available" tab and search for "OWASP Dependency-Check."
-- Check the checkbox for "OWASP Dependency-Check" and click on the "Install without restart" button.
-
-Configure Dependency-Check Tool:
-- After installing the Dependency-Check plugin, you need to configure the tool.
-- Go to "Dashboard" → "Manage Jenkins" → "Global Tool Configuration."
-- Find the section for "OWASP Dependency-Check."
-- Add the tool's name, e.g., "DP-Check."
-- Save your settings.
-
-<p align="center">
-  <img src="https://imgur.com/BjkuWub.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-Click on Apply and Save here.
-Now go configure → Pipeline and add this stage to your pipeline and build.
-
-<pre><code>
-stage('OWASP FS SCAN') {
-     steps {…}
-}
-</code></pre>
-
-Install Docker Tools and Docker Plugins:
-- Go to "Dashboard" in your Jenkins web interface.
-- Navigate to "Manage Jenkins" → "Manage Plugins."
-- Click on the "Available" tab and search for "Docker."
-- Check the following Docker-related plugins:
-  - Docker
-  - Docker Commons
-  - Docker Pipeline
-  - Docker API
-  - docker-build-step
-- Click on the "Install without restart" button to install these plugins.
-
-Add DockerHub Credentials:
-- To securely handle DockerHub credentials in your Jenkins pipeline, follow these steps:
-  - Go to "Dashboard" → "Manage Jenkins" → "Manage Credentials."
-  - Click on "System" and then "Global credentials (unrestricted)."
-  - Click on "Add Credentials" on the left side.
-  - Choose "Secret text" as the kind of credentials.
-  - Enter your DockerHub credentials (Username and Password) and give the credentials an ID (e.g., "docker").
-  - Click "OK" to save your DockerHub credentials.
-
-Monitoring Setup
-
-# Prometheus and Grafana Setup Guide
-
-<h4>Install Prometheus and Grafana</h4>
-Set up Prometheus and Grafana to monitor your application.
-
-<h4>Installing Prometheus</h4>
-Created a new t.2 medium EC2 instance for Prometheus and Grafana to run.
-
-<p align="center">
-  <img src="https://imgur.com/LkgJcr6.png" height="80%" width="80%" alt="baseline"/>
-</p>
-
-<pre><code>
-sudo useradd --system --no-create-home --shell /bin/false prometheus
-wget https://github.com/prometheus/prometheus/releases/download/v2.47.1/prometheus-2.47.1.linux-amd64.tar.gz
-</code></pre>
-
-Extract Prometheus files, move them, and create directories:
-
-<pre><code>
-tar -xvf prometheus-2.47.1.linux-amd64.tar.gz
-sudo mv prometheus-2.47.1.linux-amd64/prometheus /usr/local/bin/
-sudo mv prometheus-2.47.1.linux-amd64/promtool /usr/local/bin/
-sudo mv prometheus-2.47.1.linux-amd64/consoles /etc/prometheus/
-sudo mv prometheus-2.47.1.linux-amd64/console_libraries /etc/prometheus/
-sudo mv prometheus-2.47.1.linux-amd64/prometheus.yml /etc/prometheus/
-sudo mkdir /var/lib/prometheus
-sudo chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
-</code></pre>
-
-<h4>Prometheus Service Configuration</h4>
-Create the `prometheus.service` file to define the Prometheus service:
-
-<pre><code>
-[Unit]
-Description=Prometheus
-Wants=network-online.target
-</code></pre>
-<h2>Utilities Used</h2>
-
-
-- <b>Jenkins:</b> Continuous Integration and Continuous Deployment (CI/CD)
-- <b>Docker:</b> Containerization
-- <b>Kubernetes:</b> Container Orchestration
-- <b>Prometheus:</b> Monitoring and Alerting
-- <b>Grafana:</b> Visualization and Dashboards
-- <b>SonarQube:</b> Static Code Analysis
-- <b>OWASP Dependency-Check:</b> Dependency Vulnerability Scanning
-- <b>Trivy:</b> Container Image Vulnerability Scanning
-- <b>Node Exporter:</b> System Metrics Collection
-
-
 <h2>Steps Overview</h2>
 
 1. **Initial Setup and Deployment**
@@ -349,7 +59,7 @@ Wants=network-online.target
 5. **Kubernetes Setup**
    - Install Kubectl on Jenkins Machine
    - Setup Master and Worker Instances
-   - Initialize Kubernetes on Master Node
+   - Initialize Kubernetes on the Master Node
    - Join Worker Node to Kubernetes Cluster
    - Handle Config Files for Jenkins
    - Install Kubernetes Plugins on Jenkins
@@ -450,7 +160,7 @@ echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main |
 sudo apt-get update
 sudo apt-get install trivy</code></pre>
 
-Trivy now installed on EC2 instance
+Trivy now installed on the EC2 instance
 
 <p align="center">
 <img src="https://imgur.com/j72Oe0n.png" height="80%" width="80%" alt="baseline"/>
@@ -622,7 +332,7 @@ Add DockerHub Credentials:
 - Enter your DockerHub credentials (Username and Password) and give the credentials an ID (e.g., "docker").
 - Click "OK" to save your DockerHub credentials.
 
-Monitoring Setup
+##Monitoring Setup##
 
 # Prometheus and Grafana Setup Guide
 
@@ -927,11 +637,11 @@ Import Jenkins dashboard to Grafana
 <img src="https://imgur.com/RZa6OnS.png" height="80%" width="80%" alt="baseline"/>
 </p>
 
-Full Pipeline
+##Full Pipeline##
 
-Run pipeline by clicking Build now on Jenkins.
+Run the pipeline by clicking Build Now button on Jenkins.
 
-Pipeleine ran successfully with no errors.
+The pipeline ran successfully with no errors.
 
 <p align="center">
 <img src="https://imgur.com/qiqFBg5.png" height="80%" width="80%" alt="baseline"/>
@@ -981,7 +691,6 @@ Ensure that both master and worker instances are set up.
 </p>
 
 <h4>Setting Hostnames</h4>
-
 
 ### Master Node - Run 
 <pre><code>
