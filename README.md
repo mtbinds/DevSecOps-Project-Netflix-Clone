@@ -66,7 +66,7 @@
 
 <h3>Initial Setup and Deployment</h3>
 
-<h4>Step 1: Launch EC2 Instance</h4>
+<h4>Launch EC2 Instance</h4>
 
 -Launch an AWS T2 Large Instance using the Ubuntu image.
 -Configure HTTP and HTTPS settings in the security group.
@@ -76,13 +76,13 @@
 </p>
 
 
-<h4>Step 2: Clone  Application Code</h4>
+<h4>Clone  Application Code</h4>
 - Update all the packages
 - Clone application code repository onto the EC2 instance
 
 <pre><code>git clone https://github.com/N4si/DevSecOps-Project.git</code></pre>
 
-<h4>Step 3: Install Docker</h4>
+<h4>Install Docker</h4>
 - Set up Docker on the EC2 instance 
 <pre><code>sudo apt-get update
 sudo apt-get install docker.io -y
@@ -90,7 +90,7 @@ sudo usermod -aG docker $USER
 newgrp docker
 sudo chmod 777 /var/run/docker.sock</code></pre>
 
-<h4>Step 4: Create Dockerfile</h4>
+<h4>Create Dockerfile</h4>
 <pre><code>FROM node:16.17.0-alpine as builder
 WORKDIR /app
 COPY ./package.json .
@@ -109,7 +109,7 @@ COPY --from=builder /app/dist .
 EXPOSE 80
 ENTRYPOINT ["nginx", "-g", "daemon off;"]</code></pre>
 
-<h4>Step 5: Get the API Key</h4>
+<h4>Get the API Key</h4>
 - Open a web browser and navigate to TMDB (The Movie Database) website.
 - Click on "Login" and create an account.
 - Once logged in, go to your profile and select "Settings."
@@ -122,18 +122,17 @@ ENTRYPOINT ["nginx", "-g", "daemon off;"]</code></pre>
 <img src="https://imgur.com/AZJrgl8.png" height="80%" width="80%" alt="baseline"/>
 </p>
 
-<h4>Step 6: Build Docker Image</h4>
+<h4>Build Docker Image</h4>
 <pre><code>docker build --build-arg TMDB_V3_API_KEY=&lt;your_api_key&gt; -t netflix .</code></pre>
 
-<h4>Step 7: Install SonarQube and Trivy</h4>
+<h4>Install SonarQube and Trivy</h4>
 
 - Install SonarQube and Trivy on the EC2 instance to scan for vulnerabilities.
 
 <pre><code># Install SonarQube
 docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
-
+</code></pre>
 To access:
-
 publicIP:9000 (by default username & password is admin)
 <p align="center">
 <img src="https://imgur.com/p1ZIl15.png" height="80%" width="80%" alt="baseline"/>
@@ -154,7 +153,7 @@ sudo apt-get install trivy</code></pre>
 <img src="https://imgur.com/j72Oe0n.png" height="80%" width="80%" alt="baseline"/>
 </p>
 
-Jenkins Configuration
+
 <h4>Install Jenkins</h4>
 
 -Install Jenkins on the EC2 instance to automate deployment
