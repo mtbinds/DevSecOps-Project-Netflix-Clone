@@ -22,6 +22,7 @@
 
 
 <h2>Steps Overview</h2>
+
 1. **Initial Setup and Deployment**
    - Launch EC2 Instance
    - Clone Application Code
