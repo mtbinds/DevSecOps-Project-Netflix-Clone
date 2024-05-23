@@ -1,11 +1,11 @@
 <h1>DevSecOps Project: Netflix Clone</h1>
 
 <h2>Description</h2>
-<b>The Powershell script in this repository sets up a DevSecOps pipeline for a Netflix clone application, including security scanning, CI/CD with Jenkins, monitoring using Prometheus and Grafana, and Kubernetes deployment.</b>
+<b>This project creates a Netflix clone using various tools and technologies. Jenkins will serve as the Continuous Integration and Continuous Deployment (CICD) tool, and the application will be deployed within a Docker container, managed within a Kubernetes Cluster. Security will be intergrated into the process with Sonarqube, Trivy and OWASP Dependency Check.  Additionally, for monitoring Jenkins and Kubernetes metrics, Grafana, Prometheus, and Node exporter will be used.</b>
 
 <h2>Languages and Utilities Used</h2>
 
-- <b>PowerShell:</b> Scripting for automation
+
 - <b>Jenkins:</b> Continuous Integration and Continuous Deployment (CI/CD)
 - <b>Docker:</b> Containerization
 - <b>Kubernetes:</b> Container Orchestration
@@ -172,7 +172,8 @@ CI/CD Pipeline Configuration
 <h4>Step 11: Configure CI/CD Pipeline in Jenkins</h4>
 
 Created a CI/CD pipeline in Jenkins to automate the application deployment
-<pre><code>pipeline {
+
+pipeline {
     agent any
     tools {
         jdk 'jdk17'
@@ -180,12 +181,9 @@ Created a CI/CD pipeline in Jenkins to automate the application deployment
     }
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
-        DOCKER_CREDENTIALS_ID = 'docker'
-        SONAR_CREDENTIALS_ID = 'Sonar-token'
-        TMDB_API_KEY = 'API_KEY'
     }
     stages {
-        stage('Clean Workspace') {
+        stage('clean workspace') {
             steps {
                 cleanWs()
             }
@@ -195,72 +193,28 @@ Created a CI/CD pipeline in Jenkins to automate the application deployment
                 git branch: 'main', url: 'https://github.com/N4si/DevSecOps-Project.git'
             }
         }
-        stage('SonarQube Analysis') {
+        stage("Sonarqube Analysis") {
             steps {
                 withSonarQubeEnv('sonar-server') {
-                    sh '''$SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectName=Netflix \
-                        -Dsonar.projectKey=Netflix'''
+                    sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Netflix \
+                    -Dsonar.projectKey=Netflix'''
                 }
             }
         }
-        stage('Quality Gate') {
+        stage("quality gate") {
             steps {
                 script {
-                    waitForQualityGate abortPipeline: false, credentialsId: SONAR_CREDENTIALS_ID
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token'
                 }
             }
         }
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
-            }
-        }
-        stage('OWASP FS SCAN') {
-            steps {
-                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-            }
-        }
-        stage('Trivy FS Scan') {
-            steps {
-                sh 'trivy fs . > trivyfs.txt'
-            }
-        }
-        stage('Docker Build & Push') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: DOCKER_CREDENTIALS_ID, toolName: 'docker') {
-                        sh 'docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t netflix .'
-                        sh 'docker tag netflix morlo66/netflix:latest'
-                        sh 'docker push morlo66/netflix:latest'
-                    }
-                }
-            }
-        }
-        stage('Trivy Image Scan') {
-            steps {
-                sh 'trivy image nasi101/netflix:latest > trivyimage.txt'
-            }
-        }
-        stage('Deploy to Container') {
-            steps {
-                sh 'docker run -d --name netflix -p 8081:80 nasi101/netflix:latest'
-            }
-        }
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-                        sh 'kubectl apply -f Kubernetes/deployment.yml'
-                        sh 'kubectl apply -f Kubernetes/service.yml'
-                    }
-                }
+                sh "npm install"
             }
         }
     }
 }
-</code></pre>
 
 <h4>Install OWASP Dependency Check Plugins </h4>
 
@@ -926,6 +880,97 @@ Complete any necessary steps to terminate instances and clean up resources after
 
 <h4>Complete pipeline
 </h4>
+
+<pre><code>pipeline {
+    agent any
+    tools {
+        jdk 'jdk17'
+        nodejs 'node16'
+    }
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+        DOCKER_CREDENTIALS_ID = 'docker'
+        SONAR_CREDENTIALS_ID = 'Sonar-token'
+        TMDB_API_KEY = 'API_KEY'
+    }
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                git branch: 'main', url: 'https://github.com/N4si/DevSecOps-Project.git'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=Netflix \
+                        -Dsonar.projectKey=Netflix'''
+                }
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: SONAR_CREDENTIALS_ID
+                }
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('OWASP FS SCAN') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('Trivy FS Scan') {
+            steps {
+                sh 'trivy fs . > trivyfs.txt'
+            }
+        }
+        stage('Docker Build & Push') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: DOCKER_CREDENTIALS_ID, toolName: 'docker') {
+                        sh 'docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t netflix .'
+                        sh 'docker tag netflix morlo66/netflix:latest'
+                        sh 'docker push morlo66/netflix:latest'
+                    }
+                }
+            }
+        }
+        stage('Trivy Image Scan') {
+            steps {
+                sh 'trivy image nasi101/netflix:latest > trivyimage.txt'
+            }
+        }
+        stage('Deploy to Container') {
+            steps {
+                sh 'docker run -d --name netflix -p 8081:80 nasi101/netflix:latest'
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
+                        sh 'kubectl apply -f Kubernetes/deployment.yml'
+                        sh 'kubectl apply -f Kubernetes/service.yml'
+                    }
+                }
+            }
+        }
+    }
+}
+</code></pre>
+
 
 
 <h
