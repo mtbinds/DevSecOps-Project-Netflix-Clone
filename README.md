@@ -905,7 +905,9 @@ kubectl get svc  # use anyone
 </code></pre>
 
 ### Access from a Web Browser
+
 Access the application using:
+
 <pre><code>
 <public-ip-of-worker:service-port>
 </code></pre>
@@ -916,7 +918,8 @@ Access the application using:
 
 
 <h4>Monitoring</h4>
-p align="center">
+
+<p align="center">
 <img src="https://imgur.com/9VGLWkM.png" height="80%" width="80%" alt="baseline"/>
 </p>
 
@@ -1026,13 +1029,6 @@ Complete any necessary steps to terminate instances and clean up resources after
     }
 }
 </code></pre>
-
-
-
-<h
-
-
-
 
 
 
