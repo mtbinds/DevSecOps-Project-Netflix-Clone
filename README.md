@@ -629,7 +629,7 @@ Import Jenkins dashboard to Grafana
 <img src="https://imgur.com/RZa6OnS.png" height="80%" width="80%" alt="baseline"/>
 </p>
 
-##Full Pipeline##
+# Run  Pipeline on Jenkins
 
 Run the pipeline by clicking Build Now button on Jenkins.
 
