@@ -215,8 +215,6 @@ Install a sonar scanner in the tools.
 </p>
 
 
-CI/CD Pipeline Configuration
-
 <h4>Configure CI/CD Pipeline in Jenkins</h4>
 
 Created a CI/CD pipeline in Jenkins to automate the application deployment
