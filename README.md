@@ -130,7 +130,8 @@ ENTRYPOINT ["nginx", "-g", "daemon off;"]</code></pre>
 
 - Install SonarQube and Trivy on the EC2 instance to scan for vulnerabilities.
 
-<pre><code># Install SonarQube
+# Install SonarQube
+<pre><code>
 docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
 </code></pre>
 To access:
@@ -144,6 +145,7 @@ publicIP:9000 (by default username & password is admin)
 
 
 # Install Trivy
+<pre><code>
 sudo apt-get install wget apt-transport-https gnupg lsb-release
 wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
 echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
