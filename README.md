@@ -1130,9 +1130,7 @@ Verify that Node Exporter is running on both the master and worker nodes.
 </p>
 
 <h4>Configuring Prometheus Server</h4>
-<pre><code>
-sudo vim /etc/prometheus/prometheus.yml
-</code></pre>
+<pre><code> sudo vim /etc/prometheus/prometheus.yml </code></pre>
 
 Add the following job configurations in `prometheus.yml`:
 <pre><code>
@@ -1146,19 +1144,13 @@ Add the following job configurations in `prometheus.yml`:
 </code></pre>
 
 Validate the Prometheus configuration:
-<pre><code>
-promtool check config /etc/prometheus/prometheus.yml
-</code></pre>
+<pre><code> promtool check config /etc/prometheus/prometheus.yml </code></pre>
 
 Reload the Prometheus configuration using a POST request:
-<pre><code>
-curl -X POST http://localhost:9090/-/reload
-</code></pre>
+<pre><code> curl -X POST http://localhost:9090/-/reload </code></pre>
 
-Check the Prometheus targets:
-<pre><code>
-http://<ip>:9090/targets
-</code></pre>
+Check the Prometheus targets: http://<ip>:9090/targets
+
 
 By default, Node Exporter will be exposed on port 9100.
 
@@ -1198,11 +1190,8 @@ kubectl get svc  # use anyone
 
 ### Access from a Web Browser
 
-Access the application using:
+Access the application using: public-ip-of-worker:service-port
 
-<pre><code>
-<public-ip-of-worker:service-port>
-</code></pre>
 
 <p align="center">
 <img src="https://imgur.com/LPUO8L4.png" height="80%" width="80%" alt="baseline"/>
@@ -1222,8 +1211,6 @@ Access the application using:
 <p align="center">
 <img src="https://imgur.com/NGnK8FX.png" height="80%" width="80%" alt="baseline"/>
 </p>
-
-
 
 <h4>Terminating Instances</h4>
 
