@@ -7,7 +7,7 @@
 
 
 
-<h2>Languages and Utilities Used</h2>
+<h2>Utilities Used</h2>
 
 
 - <b>Jenkins:</b> Continuous Integration and Continuous Deployment (CI/CD)
@@ -18,14 +18,49 @@
 - <b>SonarQube:</b> Static Code Analysis
 - <b>OWASP Dependency-Check:</b> Dependency Vulnerability Scanning
 - <b>Trivy:</b> Container Image Vulnerability Scanning
+- <b>Node Exporter:</b> System Metrics Collection
 
 
 <h2>Steps Overview</h2>
-1. Initial Setup and Deployment
-2. Security Scanning (OWASP and Trivy)
-3. Continuous Integration and Continuous Deployment (CI/CD) with Jenkins
-4. Monitoring (Prometheus and Grafana)
-5. Kubernetes Setup
+1. **Initial Setup and Deployment**
+   - Launch EC2 Instance
+   - Clone Application Code
+   - Install Docker
+   - Create Dockerfile
+   - Get the API Key
+   - Build Docker Image
+
+2. **Security Scanning**
+   - Install SonarQube and Trivy
+   - Integrate SonarQube with CI/CD Pipeline
+   - Install OWASP Dependency Check Plugins in Jenkins
+   - Configure Dependency-Check Tool
+
+3. **Continuous Integration and Continuous Deployment (CI/CD) with Jenkins**
+   - Install Jenkins
+   - Install Necessary Plugins in Jenkins
+   - Configure SonarQube Server in Jenkins
+   - Configure CI/CD Pipeline in Jenkins
+   - Add DockerHub Credentials in Jenkins
+   - Configure Dependency-Check and Trivy Scans in Pipeline
+
+4. **Monitoring Setup**
+   - Install Prometheus
+   - Install Node Exporter
+   - Configure Prometheus to Scrape Metrics
+   - Install Grafana
+   - Add Prometheus Data Source in Grafana
+   - Import Pre-configured Dashboards in Grafana
+   - Configure Prometheus Plugin Integration in Jenkins
+
+5. **Kubernetes Setup**
+   - Install Kubectl on Jenkins Machine
+   - Setup Master and Worker Instances
+   - Initialize Kubernetes on Master Node
+   - Join Worker Node to Kubernetes Cluster
+   - Handle Config Files for Jenkins
+   - Install Kubernetes Plugins on Jenkins
+   - Install Node Exporter on Master and Worker Nodes
 
 <h2>Detailed Steps</h2>
 
