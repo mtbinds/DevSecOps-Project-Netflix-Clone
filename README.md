@@ -111,6 +111,7 @@ EXPOSE 80
 ENTRYPOINT ["nginx", "-g", "daemon off;"]</code></pre>
 
 <h4>Get the API Key</h4>
+
 - Open a web browser and navigate to TMDB (The Movie Database) website.
 - Click on "Login" and create an account.
 - Once logged in, go to your profile and select "Settings."
@@ -124,19 +125,22 @@ ENTRYPOINT ["nginx", "-g", "daemon off;"]</code></pre>
 </p>
 
 <h4>Build Docker Image</h4>
+
 <pre><code>docker build --build-arg TMDB_V3_API_KEY=&lt;your_api_key&gt; -t netflix .</code></pre>
 
 <h4>Install SonarQube and Trivy</h4>
 
-- Install SonarQube and Trivy on the EC2 instance to scan for vulnerabilities.
+Install SonarQube and Trivy on the EC2 instance to scan for vulnerabilities.
 
 Install SonarQube
 
 <pre><code>
 docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
 </code></pre>
+
 To access:
 publicIP:9000 (by default username & password is admin)
+
 <p align="center">
 <img src="https://imgur.com/p1ZIl15.png" height="80%" width="80%" alt="baseline"/>
 </p>
@@ -163,7 +167,8 @@ Trivy now installed on EC2 instance
 
 <h4>Install Jenkins</h4>
 
--Install Jenkins on the EC2 instance to automate deployment
+Install Jenkins on the EC2 instance to automate deployment
+
 <pre><code>sudo apt update
 sudo apt install fontconfig openjdk-17-jre
 java -version
@@ -175,8 +180,8 @@ sudo systemctl start jenkins
 sudo systemctl enable jenkins
 </code></pre>
 
-- Access Jenkins in a web browser using the public IP of your EC2 instance.
-  publicIp:8080
+Access Jenkins in a web browser using the public IP of your EC2 instance. 
+publicIp:8080
 
 <p align="center">
 <img src="https://imgur.com/m3QP2sh.png" height="80%" width="80%" alt="baseline"/>
@@ -184,11 +189,13 @@ sudo systemctl enable jenkins
 
 
 <h4>Install Necessary Plugins in Jenkins</h4>
+
 Eclipse Temurin Installer (Install without restart)
 SonarQube Scanner (Install without restart)
 NodeJs Plugin (Install without restart)
 
 Configure Java and Node.js in Global Tool Configuration.
+
 <p align="center">
 <img src="https://imgur.com/obKULqS.png" height="80%" width="80%" alt="baseline"/>
 </p>
@@ -198,13 +205,14 @@ Configure Java and Node.js in Global Tool Configuration.
 </p>
 
 <h4>Configure SonarQube Server in Manage Jenkins</h4>
+
 Create a token and add it to Jenkins. Go to Jenkins Dashboard → Manage Jenkins → Credentials
 
 <p align="center">
 <img src="https://imgur.com/ZfEVzIi.png" height="80%" width="80%" alt="baseline"/>
 </p>
 
-We will install a sonar scanner in the tools.
+Install a sonar scanner in the tools.
 
 <p align="center">
 <img src="https://imgur.com/zLRXN27.png" height="80%" width="80%" alt="baseline"/>
@@ -212,10 +220,11 @@ We will install a sonar scanner in the tools.
 
 
 CI/CD Pipeline Configuration
-<h4>Step 11: Configure CI/CD Pipeline in Jenkins</h4>
+
+<h4>Configure CI/CD Pipeline in Jenkins</h4>
 
 Created a CI/CD pipeline in Jenkins to automate the application deployment
-
+<pre><code>
 pipeline {
     agent any
     tools {
@@ -258,6 +267,7 @@ pipeline {
         }
     }
 }
+</code></pre>
 
 <h4>Install OWASP Dependency Check Plugins </h4>
 
@@ -283,7 +293,7 @@ Click on Apply and Save here.
 
 Now go configure → Pipeline and add this stage to your pipeline and build.
 
-stage('OWASP FS SCAN') {
+<pre><code>stage('OWASP FS SCAN') {
             steps {
                 dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
@@ -293,45 +303,49 @@ stage('OWASP FS SCAN') {
             steps {
                 sh "trivy fs . > trivyfs.txt"
             }
-        }
+        }</code></pre>
+
 
 Install Docker Tools and Docker Plugins:
 
-Go to "Dashboard" in your Jenkins web interface.
-Navigate to "Manage Jenkins" → "Manage Plugins."
-Click on the "Available" tab and search for "Docker."
-Check the following Docker-related plugins:
-Docker
-Docker Commons
-Docker Pipeline
-Docker API
-docker-build-step
-Click on the "Install without restart" button to install these plugins.
+- Go to "Dashboard" in your Jenkins web interface.
+- Navigate to "Manage Jenkins" → "Manage Plugins."
+- Click on the "Available" tab and search for "Docker."
+- Check the following Docker-related plugins:
+- Docker
+- Docker Commons
+- Docker Pipeline
+- Docker API
+- docker-build-step
+- Click on the "Install without restart" button to install these plugins.
 
 
 Add DockerHub Credentials:
 
-To securely handle DockerHub credentials in your Jenkins pipeline, follow these steps:
-Go to "Dashboard" → "Manage Jenkins" → "Manage Credentials."
-Click on "System" and then "Global credentials (unrestricted)."
-Click on "Add Credentials" on the left side.
-Choose "Secret text" as the kind of credentials.
-Enter your DockerHub credentials (Username and Password) and give the credentials an ID (e.g., "docker").
-Click "OK" to save your DockerHub credentials.
-
-
+- To securely handle DockerHub credentials in your Jenkins pipeline, follow these steps:
+- Go to "Dashboard" → "Manage Jenkins" → "Manage Credentials."
+- Click on "System" and then "Global credentials (unrestricted)."
+- Click on "Add Credentials" on the left side.
+- Choose "Secret text" as the kind of credentials.
+- Enter your DockerHub credentials (Username and Password) and give the credentials an ID (e.g., "docker").
+- Click "OK" to save your DockerHub credentials.
 
 Monitoring Setup
+
 # Prometheus and Grafana Setup Guide
+
 <h4>Install Prometheus and Grafana</h4>
+
 Set up Prometheus and Grafana to monitor your application.
 
 <h4>Installing Prometheus</h4>
 
-Created new t.2 medium EC2 instance for prometheus and grafana to run
+Created new t.2 medium EC2 instance for prometheus and grafana to run,
+
 <p align="center">
 <img src="https://imgur.com/LkgJcr6.png" height="80%" width="80%" alt="baseline"/>
 </p>
+
 <pre><code>sudo useradd --system --no-create-home --shell /bin/false prometheus
 wget https://github.com/prometheus/prometheus/releases/download/v2.47.1/prometheus-2.47.1.linux-amd64.tar.gz
 </code></pre>
@@ -391,13 +405,12 @@ Check the status of the Prometheus service:
 Open your web browser and navigate to: http://<your-server-ip>:9090
 
 Prometheus now running on port 9090
+
 <p align="center">
 <img src="https://imgur.com/JsmhZiw.png" height="80%" width="80%" alt="baseline"/>
 </p>
 
-
 <h4>Installing Node Exporter</h4>
-
 
 Node Exporter is used to collect and expose system-level metrics such as CPU, memory, disk, and network usage for Prometheus to scrape and monitor.
 
@@ -497,16 +510,16 @@ Reload Prometheus configuration without restarting:
 </code></pre>
 
 Node exporter metrics visible on port 9100
+
 <p align="center">
 <img src="https://imgur.com/aU2DgC5.png" height="80%" width="80%" alt="baseline"/>
 </p>
-
 
 <h4>Accessing Prometheus Targets</h4>
 
 Open your web browser and navigate to: http://<your-prometheus-ip>:9090/targets
 
-Node exporter and Jenkins target on Prometheus
+Node exporter and Jenkins target now showing on Prometheus
 
 
 <p align="center">
