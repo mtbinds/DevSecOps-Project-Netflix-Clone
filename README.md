@@ -1014,7 +1014,7 @@ Complete any necessary steps to terminate instances and clean up resources after
                     withDockerRegistry(credentialsId: DOCKER_CREDENTIALS_ID, toolName: 'docker') {
                         sh 'docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t netflix .'
                         sh 'docker tag netflix dockerhub_id/netflix:latest'
-                        sh 'docker push morlo66/netflix:latest'
+                        sh 'docker push dockerhub_id/netflix:latest'
                     }
                 }
             }
